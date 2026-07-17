@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flex Radar">
+<meta name="theme-color" content="#0D1015">
+<title>Flex Radar</title>
+<style>
+:root{--bg:#0D1015;--panel:#161B23;--panel2:#1D242F;--line:#2A3342;--text:#E8EDF4;--dim:#8A96A8;--amber:#FFB020;--green:#3DDC84;--red:#FF5C5C;--blue:#5CA8FF;--uber:#8AE1FF;--dln3:#5CA8FF;--dln8:#C48CFF;--uil2:#3DDC84}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:ui-monospace,'SF Mono',Menlo,'Roboto Mono',monospace;max-width:480px;margin:0 auto;padding:14px 14px 95px;min-height:100vh}
+.hdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.title{font-size:20px;font-weight:800;letter-spacing:1px;color:var(--amber)}
+.sub{font-size:11px;color:var(--dim)}
+.clock{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.lbl{font-size:11px;color:var(--dim);margin:12px 0 6px}
+.row{display:flex;gap:6px}
+.btn{flex:1;padding:12px 2px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel2);color:var(--dim);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer}
+.btn.on{border-color:var(--c,var(--amber));color:var(--c,var(--amber));background:color-mix(in srgb,var(--c,var(--amber)) 13%,transparent)}
+.inp{width:100%;padding:12px 14px;font-size:16px;font-weight:700;font-family:inherit;background:var(--panel2);border:1.5px solid var(--line);border-radius:10px;color:var(--text);outline:none}
+.big{width:100%;padding:18px;border-radius:12px;border:none;font-size:18px;font-weight:800;font-family:inherit;letter-spacing:1px;cursor:pointer;margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.item{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px}
+.del{background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:2px 6px}
+.tabs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;display:flex;background:var(--panel);border-top:1px solid var(--line)}
+.tab{flex:1;padding:15px 0 19px;background:none;border:none;border-top:2.5px solid transparent;color:var(--dim);font-family:inherit;font-weight:800;font-size:12px;letter-spacing:.5px;cursor:pointer}
+.tab.on{border-top-color:var(--amber);color:var(--amber)}
+.hint{font-size:11px;color:var(--dim);margin-top:8px;text-align:center}
+.bars{display:flex;align-items:flex-end;gap:3px;height:90px}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;border-radius:3px;background:var(--line)}
+.small{width:46px;padding:5px 6px;font-size:12px;font-family:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:6px;outline:none}
+.stat3{display:flex;justify-content:space-between;text-align:center}
+h4{font-size:12px;font-weight:700;margin-bottom:8px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div><div class="title">FLEX RADAR</div><div class="sub" id="goalline"></div></div>
+  <div><div class="clock" id="clock"></div><div class="sub" id="dateline" style="text-align:right"></div></div>
+</div>
+
+<div id="pg-log">
+  <div class="lbl">DEPO</div><div class="row" id="ostations"></div>
+  <div class="lbl">BLOK SÜRESİ (SAAT)</div><div class="row" id="odurs"></div>
+  <div class="lbl">AYNI ANDA KAÇ TEKLİF DÜŞTÜ?</div><div class="row" id="ocounts"></div>
+  <div class="row" style="margin-top:12px">
+    <div style="flex:1"><div class="lbl" style="margin-top:0">ÜCRET ($)</div><input class="inp" id="oprice" inputmode="decimal" placeholder="51.5"></div>
+    <div style="flex:1"><div class="lbl" style="margin-top:0">BLOK SAATİ (ops.)</div><input class="inp" id="obstart" placeholder="06:15"></div>
+  </div>
+  <div class="lbl">TEKLİF DURUMU</div>
+  <div class="row">
+    <button class="btn" id="bnew" style="--c:var(--green)">⚡ YENİ DÜŞTÜ</button>
+    <button class="btn" id="bold" style="--c:var(--dim)">AÇILIŞTA VARDI</button>
+  </div>
+  <button class="big" id="osave" style="background:var(--amber);color:#0D1015">KAYDET</button>
+  <div class="hint">akşam düşenleri de kaydet — yarın sabahın blokları olabilir</div>
+  <div class="lbl hidden" id="olist-lbl" style="margin-top:20px">SON TEKLİFLER</div>
+  <div id="olist"></div>
+</div>
+
+<div id="pg-blok" class="hidden">
+  <div class="card stat3" id="today"></div>
+  <div id="blokform"></div>
+  <div class="card hidden" id="groups"></div>
+  <div class="lbl hidden" id="donelbl">TAMAMLANAN BLOKLAR — tips sonradan girilebilir</div>
+  <div id="donelist"></div>
+</div>
+
+<div id="pg-uber" class="hidden">
+  <div class="card stat3" id="utoday"></div>
+  <div id="uberform"></div>
+  <div class="card hidden" id="uavg"></div>
+  <div class="lbl hidden" id="ulistlbl">UBER OTURUMLARI — kazancı gir</div>
+  <div id="ulist"></div>
+</div>
+
+<div id="pg-analiz" class="hidden">
+  <div class="row" id="afilter" style="margin-bottom:16px"></div>
+  <div id="acontent"></div>
+  <button class="big" id="csv" style="background:var(--panel2);color:var(--text);border:1.5px solid var(--line);font-size:14px;padding:14px">TÜM VERİYİ CSV AKTAR</button>
+</div>
+
+<div class="tabs">
+  <button class="tab on" data-pg="log">⚡ TEKLİF</button>
+  <button class="tab" data-pg="blok">▶ BLOK</button>
+  <button class="tab" data-pg="uber">🚗 UBER</button>
+  <button class="tab" data-pg="analiz">📊 ANALİZ</button>
+</div>
+
+<script>
+const STS=["DLN3","DLN8","UIL2"],DURS=[1.5,2,2.5,3,3.5,4],CNTS=[1,2,3,4,5,6],GOAL=300;
+const SC={DLN3:"var(--dln3)",DLN8:"var(--dln8)",UIL2:"var(--uil2)"};
+let offers=JSON.parse(localStorage.getItem("fr-offers")||"[]");
+let blocks=JSON.parse(localStorage.getItem("fr-blocks")||"[]");
+let ubers=JSON.parse(localStorage.getItem("fr-uber")||"[]");
+let st="UIL2",dur=2,cnt=1,isNew=true,bSt="UIL2",bDur=2,filter="HEPSİ";
+const $=id=>document.getElementById(id);
+const fmtT=iso=>new Date(iso).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+const fmtTs=iso=>new Date(iso).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+const fmtD=iso=>new Date(iso).toLocaleDateString("tr-TR",{day:"2-digit",month:"2-digit"});
+const mins=(a,b)=>Math.round((new Date(b)-new Date(a))/60000);
+const hm=m=>(m>=60?Math.floor(m/60)+"s ":"")+(m%60)+"dk";
+const num=v=>{const p=parseFloat(String(v||"").replace(",","."));return isNaN(p)?null:p};
+const mi=x=>(x.mi0!=null&&x.mi1!=null&&x.mi1>=x.mi0)?x.mi1-x.mi0:null;
+const saveO=()=>localStorage.setItem("fr-offers",JSON.stringify(offers));
+const saveB=()=>localStorage.setItem("fr-blocks",JSON.stringify(blocks));
+const saveU=()=>localStorage.setItem("fr-uber",JSON.stringify(ubers));
+
+function todayStats(){
+  const t=fmtD(new Date().toISOString());
+  const tb=blocks.filter(b=>b.start&&b.end&&fmtD(b.start)===t);
+  const tu=ubers.filter(u=>u.start&&u.end&&fmtD(u.start)===t);
+  const fp=tb.reduce((a,b)=>a+(b.base||0)+(b.tip||0),0);
+  const up=tu.reduce((a,u)=>a+(u.pay||0),0);
+  const tm=[...tb,...tu].reduce((a,x)=>a+(mi(x)||0),0);
+  return{tb,tu,fp,up,tot:fp+up,miles:tm,cap:blocks.filter(b=>b.start&&fmtD(b.start)===t).reduce((a,b)=>a+b.dur,0)};
+}
+
+setInterval(()=>{const n=new Date();
+$("clock").textContent=n.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+$("dateline").textContent=n.toLocaleDateString("tr-TR",{weekday:"short",day:"2-digit",month:"2-digit"});
+const s=todayStats();
+$("goalline").textContent="bugün: $"+s.tot.toFixed(0)+" / $"+GOAL+" · "+s.miles.toFixed(0)+" mi";
+const ab=blocks.find(b=>b.start&&!b.end),au=ubers.find(u=>u.start&&!u.end);
+const bt=$("btimer");if(ab&&bt)bt.textContent=hm(mins(ab.start,n.toISOString()));
+const ut=$("utimer");if(au&&ut)ut.textContent=hm(mins(au.start,n.toISOString()));
+},1000);
+
+function seg(el,items,get,set,colors){
+  el.innerHTML="";
+  items.forEach(v=>{const b=document.createElement("button");b.className="btn"+(get()===v?" on":"");
+  if(colors&&colors[v])b.style.setProperty("--c",colors[v]);
+  b.textContent=v+(v===6&&items===CNTS?"+":"");b.onclick=()=>{set(v);seg(el,items,get,set,colors)};el.appendChild(b);});
+}
+function drawLogForm(){
+  seg($("ostations"),STS,()=>st,v=>st=v,SC);
+  seg($("odurs"),DURS,()=>dur,v=>dur=v,null);
+  seg($("ocounts"),CNTS,()=>cnt,v=>cnt=v,{1:"var(--blue)",2:"var(--blue)",3:"var(--blue)",4:"var(--blue)",5:"var(--blue)",6:"var(--blue)"});
+  $("bnew").className="btn"+(isNew?" on":"");$("bold").className="btn"+(!isNew?" on":"");
+}
+$("bnew").onclick=()=>{isNew=true;drawLogForm()};
+$("bold").onclick=()=>{isNew=false;drawLogForm()};
+$("osave").onclick=()=>{
+  offers.unshift({id:Date.now()+"o",ts:new Date().toISOString(),station:st,duration:dur,price:num($("oprice").value),isNew,count:cnt,blockStart:($("obstart").value||"").trim()||null});
+  saveO();$("oprice").value="";$("obstart").value="";cnt=1;drawLogForm();
+  $("osave").textContent="✓ KAYDEDİLDİ";$("osave").style.background="var(--green)";
+  setTimeout(()=>{$("osave").textContent="KAYDET";$("osave").style.background="var(--amber)"},1200);
+  drawOList();
+};
+function drawOList(){
+  const el=$("olist");el.innerHTML="";
+  $("olist-lbl").classList.toggle("hidden",!offers.length);
+  offers.slice(0,6).forEach(e=>{
+    const d=document.createElement("div");d.className="item";
+    d.innerHTML=`<span style="color:${e.isNew?"var(--green)":"var(--dim)"}">${e.isNew?"⚡":"·"}</span>
+    <span style="color:${SC[e.station]};font-weight:700;width:40px">${e.station}</span>
+    <span style="width:28px">${e.duration}s</span>
+    <span style="width:28px;color:var(--blue);font-weight:700">×${e.count||1}</span>
+    <span style="width:44px;font-weight:700">${e.price!=null?"$"+e.price:"—"}</span>
+    <span style="width:40px;color:var(--amber)">${e.blockStart||""}</span>
+    <span style="color:var(--dim);flex:1">${fmtD(e.ts)} ${fmtTs(e.ts)}</span>`;
+    const x=document.createElement("button");x.className="del";x.textContent="×";
+    x.onclick=()=>{offers=offers.filter(o=>o.id!==e.id);saveO();drawOList()};
+    d.appendChild(x);el.appendChild(d);
+  });
+}
+
+// ── BLOK ──
+function drawBlok(){
+  const s=todayStats();
+  $("today").innerHTML=[["FLEX","$"+s.fp.toFixed(0)],["FİİLİ",hm(s.tb.reduce((a,b)=>a+mins(b.start,b.end),0))],["LİMİT",s.cap+"/8s"]]
+    .map(([l,v])=>`<div><div style="font-size:10px;color:var(--dim)">${l}</div><div style="font-size:20px;font-weight:800;color:var(--amber)">${v}</div></div>`).join("");
+  const a=blocks.find(b=>b.start&&!b.end);
+  const f=$("blokform");
+  if(a){
+    f.innerHTML=`<div class="card" style="border-color:var(--green);text-align:center">
+      <div style="font-size:12px;color:var(--green);font-weight:700;margin-bottom:4px">AKTİF BLOK · ${a.station} ${a.dur}s ${a.base!=null?"· $"+a.base:""} ${a.mi0!=null?"· başlangıç "+a.mi0+" mi":""}</div>
+      <div id="btimer" style="font-size:36px;font-weight:800;margin-bottom:12px">${hm(mins(a.start,new Date().toISOString()))}</div>
+      <input class="inp" id="bmi1" inputmode="numeric" placeholder="bitiş mili" style="text-align:center;margin-bottom:10px">
+      <button class="big" id="bend" style="background:var(--red);color:#fff;margin-top:0">■ BİTİRDİM</button>
+      <div class="hint">başlangıç: ${fmtT(a.start)}</div></div>`;
+    $("bend").onclick=()=>{a.end=new Date().toISOString();a.mi1=num($("bmi1").value);saveB();drawBlok()};
+  }else{
+    f.innerHTML=`<div class="card"><div class="lbl" style="margin-top:0">YENİ BLOK</div>
+      <div class="row" id="bsts" style="margin-bottom:10px"></div>
+      <div class="row" id="bdurs" style="margin-bottom:10px"></div>
+      <div class="row" style="margin-bottom:12px">
+        <input class="inp" id="bbase" inputmode="decimal" placeholder="baz ücret $">
+        <input class="inp" id="bmi0" inputmode="numeric" placeholder="başlangıç mili">
+      </div>
+      <button class="big" id="bstart" style="background:var(--green);color:#0D1015;margin-top:0">▶ BAŞLADIM</button></div>`;
+    seg($("bsts"),STS,()=>bSt,v=>bSt=v,SC);
+    seg($("bdurs"),DURS,()=>bDur,v=>bDur=v,null);
+    $("bstart").onclick=()=>{
+      blocks.unshift({id:Date.now()+"b",station:bSt,dur:bDur,base:num($("bbase").value),tip:null,start:new Date().toISOString(),end:null,mi0:num($("bmi0").value),mi1:null});
+      saveB();drawBlok();
+    };
+  }
+  const done=blocks.filter(b=>b.start&&b.end);
+  const g={};
+  done.forEach(b=>{const k=b.station+" "+b.dur+"s";
+    (g[k]=g[k]||{n:0,ms:[],pay:0,pn:0,mi:0,mn:0});
+    const m=mins(b.start,b.end);g[k].n++;g[k].ms.push(m);
+    if(b.base!=null){g[k].pay+=(b.base||0)+(b.tip||0);g[k].pn++;}
+    const mm=mi(b);if(mm!=null){g[k].mi+=mm;g[k].mn++;}
+  });
+  const rows=Object.entries(g).map(([k,v])=>{
+    const avg=Math.round(v.ms.reduce((a,c)=>a+c,0)/v.n);
+    const ap=v.pn?v.pay/v.pn:null;
+    return{k,n:v.n,avg,min:Math.min(...v.ms),max:Math.max(...v.ms),ap,h:ap?ap/(avg/60):null,ami:v.mn?v.mi/v.mn:null};
+  }).sort((a,b)=>(b.h||0)-(a.h||0));
+  const byDay={};done.forEach(b=>{(byDay[fmtD(b.start)]=byDay[fmtD(b.start)]||[]).push(b)});
+  const gaps=[];Object.values(byDay).forEach(arr=>{arr.sort((a,b)=>new Date(a.start)-new Date(b.start));
+    for(let i=1;i<arr.length;i++)gaps.push(mins(arr[i-1].end,arr[i].start));});
+  const ge=$("groups");
+  if(rows.length){ge.classList.remove("hidden");
+    ge.innerHTML=`<h4 style="color:var(--blue)">BLOK TİPİ KARŞILAŞTIRMASI (fiili $/saat)</h4>`+
+    rows.map(r=>`<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700">
+      <span>${r.k} <span style="color:var(--dim);font-weight:400">×${r.n}</span></span>
+      <span style="color:var(--green)">${r.h?"$"+r.h.toFixed(1)+"/s":"—"}</span></div>
+      <div style="font-size:12px;color:var(--dim);margin-top:2px">ort ${hm(r.avg)} · aralık ${hm(r.min)}–${hm(r.max)} ${r.ap?"· ort $"+r.ap.toFixed(1):""} ${r.ami!=null?"· ort "+r.ami.toFixed(0)+" mi":""}</div></div>`).join("")+
+    (gaps.length?`<div style="font-size:12px;color:var(--amber)">bloklar arası ort. boşluk: <b>${hm(Math.round(gaps.reduce((a,c)=>a+c,0)/gaps.length))}</b> (${gaps.length} geçiş)</div>`:"");
+  }else ge.classList.add("hidden");
+  $("donelbl").classList.toggle("hidden",!done.length);
+  const dl=$("donelist");dl.innerHTML="";
+  done.slice(0,10).forEach(b=>{
+    const d=document.createElement("div");d.className="item";
+    d.innerHTML=`<span style="color:${SC[b.station]};font-weight:700;width:38px">${b.station}</span>
+    <span style="width:26px">${b.dur}s</span>
+    <span style="color:var(--dim);width:60px">${fmtD(b.start)} ${fmtT(b.start)}</span>
+    <span style="width:42px;font-weight:700">${hm(mins(b.start,b.end))}</span>
+    <span style="width:38px;color:var(--dim)">${mi(b)!=null?mi(b)+"mi":"—"}</span>
+    <span style="width:28px">${b.base!=null?"$"+b.base:"—"}</span>`;
+    const t=document.createElement("input");t.className="small";t.placeholder="tip";t.inputMode="decimal";t.value=b.tip??"";t.style.color="var(--green)";
+    t.onblur=()=>{b.tip=num(t.value);saveB();drawBlok()};
+    const x=document.createElement("button");x.className="del";x.textContent="×";
+    x.onclick=()=>{blocks=blocks.filter(o=>o.id!==b.id);saveB();drawBlok()};
+    d.appendChild(t);d.appendChild(x);dl.appendChild(d);
+  });
+}
+
+// ── UBER ──
+function drawUber(){
+  const s=todayStats();
+  $("utoday").innerHTML=[["UBER BUGÜN","$"+s.up.toFixed(0)],["SÜRE",hm(s.tu.reduce((a,u)=>a+mins(u.start,u.end),0))],["GÜN TOPLAM","$"+s.tot.toFixed(0)+"/"+GOAL]]
+    .map(([l,v])=>`<div><div style="font-size:10px;color:var(--dim)">${l}</div><div style="font-size:18px;font-weight:800;color:var(--uber)">${v}</div></div>`).join("");
+  const a=ubers.find(u=>u.start&&!u.end);
+  const f=$("uberform");
+  if(a){
+    f.innerHTML=`<div class="card" style="border-color:var(--uber);text-align:center">
+      <div style="font-size:12px;color:var(--uber);font-weight:700;margin-bottom:4px">AKTİF UBER OTURUMU ${a.mi0!=null?"· başlangıç "+a.mi0+" mi":""}</div>
+      <div id="utimer" style="font-size:36px;font-weight:800;margin-bottom:12px">${hm(mins(a.start,new Date().toISOString()))}</div>
+      <input class="inp" id="umi1" inputmode="numeric" placeholder="bitiş mili" style="text-align:center;margin-bottom:10px">
+      <button class="big" id="uend" style="background:var(--red);color:#fff;margin-top:0">■ BİTİRDİM</button>
+      <div class="hint">başlangıç: ${fmtT(a.start)} — kazancı bitince listeye gir</div></div>`;
+    $("uend").onclick=()=>{a.end=new Date().toISOString();a.mi1=num($("umi1").value);saveU();drawUber()};
+  }else{
+    f.innerHTML=`<div class="card">
+      <input class="inp" id="umi0" inputmode="numeric" placeholder="başlangıç mili" style="text-align:center;margin-bottom:12px">
+      <button class="big" id="ustart" style="background:var(--uber);color:#0D1015;margin-top:0">▶ UBER'E BAŞLADIM</button></div>`;
+    $("ustart").onclick=()=>{
+      ubers.unshift({id:Date.now()+"u",start:new Date().toISOString(),end:null,pay:null,mi0:num($("umi0").value),mi1:null});
+      saveU();drawUber();
+    };
+  }
+  const done=ubers.filter(u=>u.start&&u.end);
+  const w=done.filter(u=>u.pay!=null);
+  const tm=w.reduce((a,u)=>a+mins(u.start,u.end),0);
+  const tp=w.reduce((a,u)=>a+u.pay,0);
+  const ua=$("uavg");
+  if(tm>0){ua.classList.remove("hidden");
+    ua.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:12px;color:var(--dim)">Uber genel fiili ortalama</span>
+      <span style="font-size:20px;font-weight:800;color:var(--uber)">$${(tp/(tm/60)).toFixed(1)}/s</span></div>`;
+  }else ua.classList.add("hidden");
+  $("ulistlbl").classList.toggle("hidden",!done.length);
+  const ul=$("ulist");ul.innerHTML="";
+  done.slice(0,10).forEach(u=>{
+    const m=mins(u.start,u.end);
+    const d=document.createElement("div");d.className="item";
+    d.innerHTML=`<span style="color:var(--dim);width:60px">${fmtD(u.start)} ${fmtT(u.start)}</span>
+    <span style="width:46px;font-weight:700">${hm(m)}</span>
+    <span style="width:40px;color:var(--dim)">${mi(u)!=null?mi(u)+"mi":"—"}</span>
+    <span style="flex:1;color:${u.pay!=null&&m>0?"var(--uber)":"var(--dim)"};font-weight:700">${u.pay!=null&&m>0?"$"+(u.pay/(m/60)).toFixed(1)+"/s":"—"}</span>`;
+    const t=document.createElement("input");t.className="small";t.placeholder="$";t.inputMode="decimal";t.value=u.pay??"";t.style.color="var(--uber)";
+    t.onblur=()=>{u.pay=num(t.value);saveU();drawUber()};
+    const x=document.createElement("button");x.className="del";x.textContent="×";
+    x.onclick=()=>{ubers=ubers.filter(o=>o.id!==u.id);saveU();drawUber()};
+    d.appendChild(t);d.appendChild(x);ul.appendChild(d);
+  });
+}
+
+// ── ANALİZ ──
+function drawAnaliz(){
+  seg($("afilter"),["HEPSİ",...STS],()=>filter,v=>{filter=v;drawAnaliz()},{...SC,"HEPSİ":"var(--amber)"});
+  const fo=offers.filter(e=>filter==="HEPSİ"||e.station===filter);
+  const fresh=fo.filter(e=>e.isNew);
+  const ac=$("acontent");
+  if(!fresh.length){ac.innerHTML=`<div style="color:var(--dim);text-align:center;padding:40px 20px;line-height:1.6;font-size:13px">Henüz "yeni düştü" kaydı yok.</div>`;return;}
+  const mb=Array(12).fill(0);fresh.forEach(e=>mb[Math.floor(new Date(e.ts).getMinutes()/5)]+=(e.count||1));
+  const hb=Array(24).fill(0);fresh.forEach(e=>hb[new Date(e.ts).getHours()]+=(e.count||1));
+  const mm=Math.max(1,...mb),mh=Math.max(1,...hb);
+  const tot=fresh.reduce((a,e)=>a+(e.count||1),0);
+  ac.innerHTML=`<div class="card"><h4 style="color:var(--amber)">DAKİKA RADARI</h4>
+    <div class="sub" style="margin-bottom:12px">saatin kaçıncı dakikasında düşüyor? (${tot} teklif, adet ağırlıklı)</div>
+    <div class="bars">${mb.map((v,i)=>`<div class="bcol">${v?`<div style="font-size:10px;color:var(--amber);font-weight:700">${v}</div>`:""}
+      <div class="bar" style="height:${Math.max(3,v/mm*60)}px;${v?"background:var(--amber)":""}"></div>
+      <div style="font-size:9px;color:var(--dim)">:${String(i*5).padStart(2,"0")}</div></div>`).join("")}</div></div>
+    <div class="card"><h4 style="color:var(--blue)">GÜNÜN SAATLERİ (adet ağırlıklı)</h4>
+    <div class="bars" style="height:70px">${hb.map((v,i)=>`<div class="bcol">
+      <div class="bar" style="height:${Math.max(2,v/mh*50)}px;${v?"background:var(--blue)":""}"></div>
+      ${i%3===0?`<div style="font-size:8px;color:var(--dim)">${i}</div>`:""}</div>`).join("")}</div></div>`;
+}
+$("csv").onclick=()=>{
+  const rows=["tur,tarih,saat,depo,sure,ucret_baz,tip,adet,blok_saati,gercek_dk,mil,yeni_dustu"];
+  [...offers].reverse().forEach(e=>rows.push(["teklif",fmtD(e.ts),fmtTs(e.ts),e.station,e.duration,e.price??"","",e.count||1,e.blockStart??"","","",e.isNew?1:0].join(",")));
+  blocks.filter(b=>b.start&&b.end).reverse().forEach(b=>rows.push(["blok",fmtD(b.start),fmtT(b.start),b.station,b.dur,b.base??"",b.tip??"","","",mins(b.start,b.end),mi(b)??"",""].join(",")));
+  ubers.filter(u=>u.start&&u.end).reverse().forEach(u=>rows.push(["uber",fmtD(u.start),fmtT(u.start),"","",u.pay??"","","","",mins(u.start,u.end),mi(u)??"",""].join(",")));
+  const txt=rows.join("\n");
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>alert("CSV panoya kopyalandı"),()=>prompt("Kopyala:",txt));
+  else prompt("Kopyala:",txt);
+};
+
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));t.classList.add("on");
+  ["log","blok","uber","analiz"].forEach(p=>$("pg-"+p).classList.toggle("hidden",p!==t.dataset.pg));
+  if(t.dataset.pg==="blok")drawBlok();
+  if(t.dataset.pg==="uber")drawUber();
+  if(t.dataset.pg==="analiz")drawAnaliz();
+});
+
+drawLogForm();drawOList();
+</script>
+</body>
+</html>
